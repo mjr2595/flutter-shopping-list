@@ -39,6 +39,13 @@ class _GroceryListState extends State<GroceryList> {
       });
     }
 
+    if (response.body == 'null') {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
     final Map<String, dynamic> listData = json.decode(response.body);
     final List<GroceryItem> loadedItems = [];
 
@@ -76,10 +83,26 @@ class _GroceryListState extends State<GroceryList> {
     }
   }
 
-  void _removeItem(GroceryItem itemToRemove) {
+  void _removeItem(GroceryItem itemToRemove) async {
+    final index = _groceryItems.indexOf(itemToRemove);
+
     setState(() {
       _groceryItems.remove(itemToRemove);
     });
+
+    final url = Uri.https(
+      'flutter-shopping-list-69420-default-rtdb.firebaseio.com',
+      'shopping-list/${itemToRemove.id}.json',
+    );
+
+    final response = await http.delete(url);
+
+    if (response.statusCode >= 400) {
+      // TODO: Show error message
+      setState(() {
+        _groceryItems.insert(index, itemToRemove);
+      });
+    }
   }
 
   @override
